@@ -28,7 +28,7 @@ Predicting variant clinical significance is crucial for genetic diagnosis and re
 
 # 3. Prediction Task
 Objective:
-We aim to predict the clinical significance of a variant using features like allele frequency, population distribution, and genomic context.
+The aim is to predict the clinical significance of a variant using features like allele frequency, population distribution, and genomic context.
 
 Practical Application:
 Precision Medicine: Identifying likely pathogenic variants in patients.
