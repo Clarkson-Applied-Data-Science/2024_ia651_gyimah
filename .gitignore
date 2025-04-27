@@ -173,18 +173,18 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Ignore all files in the root directory
+# Ignore everything in the root directory
 /*
 
-# Ignore all files/directories in the root
-/*
-
-# Exceptions: Keep specific files
+# But keep these SPECIFIC FILES (no extensions)
+!.gitignore
 !README
 !requirements
-!.gitignore
 
-# Exceptions: Keep directories and their contents
+# Keep these directories AND THEIR CONTENTS (critical!)
+!/src/
+!/docs/
+!/checkpoints/
 !/src/**
 !/docs/**
 !/checkpoints/**
