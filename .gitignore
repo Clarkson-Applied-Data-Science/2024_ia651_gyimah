@@ -180,3 +180,4 @@ candle_predictor.py
 
 # Ignore the /env directory
 /env/
+/data/
