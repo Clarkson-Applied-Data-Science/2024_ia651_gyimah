@@ -176,15 +176,14 @@ cython_debug/
 # Ignore everything in the root directory
 /*
 
-# But keep these SPECIFIC FILES (no extensions)
-!.gitignore
-!README*
-!requirements*
+# But keep these specific files (with their extensions)
+!README.md
+!requirements.txt
+# If you have other variations, add them specifically
+!README
+!requirements
 
 # Keep these directories AND THEIR CONTENTS (critical!)
 !/src/
 !/docs/
 !/checkpoints/
-!/src/**
-!/docs/**
-!/checkpoints/**
