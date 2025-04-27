@@ -176,5 +176,5 @@ cython_debug/
 #raw data
 ./data/raw_genetic_data.csv
 ./full_cv_metrics.csv
-.geneticML.py
-.candle_predictor.py
+./geneticML.py
+./candle_predictor.py
