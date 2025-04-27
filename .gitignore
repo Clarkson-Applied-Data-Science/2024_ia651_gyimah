@@ -173,18 +173,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Ignore everything in the root directory
-/*
-
-# But keep these SPECIFIC FILES (no extensions)
-!.gitignore
-!README
-!requirements
-
-# Keep these directories AND THEIR CONTENTS (critical!)
-!/src/
-!/docs/
-!/checkpoints/
-!/src/**
-!/docs/**
-!/checkpoints/**
+# Ignore specific root files (not in src/docs/checkpoints)
+/candle_predictor
+/full_cv_metrics
+/geneticML
