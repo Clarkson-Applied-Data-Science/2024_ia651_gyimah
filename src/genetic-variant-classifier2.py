@@ -1228,23 +1228,31 @@ class GeneticVariantAnalysis:
 
 
     
-    def run_holdout_evaluation(self, df, best_models=None):
-        """Hold-out eval comparing pop-aware vs non-pop pipelines.
-
-        If y has >2 unique classes the fairness reducer is skipped because
-        DemographicParity/EqualizedOdds in `fairlearn` accept only binary labels.
+        # ---------------------------------------------------------------------
+    # Hold-out evaluation (multiclass OR binary)
+    # ---------------------------------------------------------------------
+    def run_holdout_evaluation(self, df: pd.DataFrame,
+                            best_models: dict | None = None):
         """
+        Hold-out evaluation (pop-aware vs non-pop pipelines).
+
+        • Works for 3-class or binary targets.
+        • Fairness GridSearch is only applied when target is binary.
+        """
+        import numpy as np                     # local import to be explicit
+        from sklearn.metrics import (
+            accuracy_score, classification_report,
+        )
+        from fairlearn.reductions import GridSearch, DemographicParity
+
         self.logger.info("\n=== Hold-out Evaluation ===")
 
-        # ------------------------------------------------------------------
-        # 0. split chronologically, preserve population stratification
-        # ------------------------------------------------------------------
+        # ---------- 0. split -------------------------------------------------
         X_tr, X_te, y_tr, y_te, pop_tr, pop_te = (
             self.preprocessor.population_stratified_split(
                 df, test_size=0.20, random_state=42
             )
         )
-
         pop_cols = [c for c in X_tr.columns
                     if c == "population_name" or c.startswith("pop_")]
         X_tr_no = X_tr.drop(pop_cols, axis=1, errors="ignore")
@@ -1252,21 +1260,21 @@ class GeneticVariantAnalysis:
 
         if best_models is None:
             best_models = {
-                "population_aware":    {"scaler": "standard", "model": "RandomForest"},
-                "nonpopulation_aware": {"scaler": "standard", "model": "RandomForest"},
+                "population_aware":    {"scaler": "standard",
+                                        "model":  "RandomForest"},
+                "nonpopulation_aware": {"scaler": "standard",
+                                        "model":  "RandomForest"},
             }
 
         multiclass = len(np.unique(y_tr)) > 2
         if multiclass:
             self.logger.info(
-                "Detected multiclass target → fairness reductions will be skipped."
+                "Detected multiclass target → fairness reductions are skipped"
             )
 
         results = {}
 
-        # ------------------------------------------------------------------
-        # 1. evaluate both arms
-        # ------------------------------------------------------------------
+        # ---------- 1. evaluate both arms ------------------------------------
         for mode, (Xtr, Xte, popte) in [
             ("population_aware",    (X_tr,    X_te,    pop_te)),
             ("nonpopulation_aware", (X_tr_no, X_te_no, pop_te)),
@@ -1285,88 +1293,64 @@ class GeneticVariantAnalysis:
 
             base_est = self.model_manager.get_model_instance(model_name)
 
+            # ---- optionally wrap with fairness GridSearch (binary only) -----
             if not multiclass:
-                # ------------- binary task → add fairness constraint ---------
-                fair_est = GridSearch(
+                fair_est  = GridSearch(
                     estimator=base_est,
                     constraints=DemographicParity(),
                     grid_size=20,
                 )
                 final_est = fair_est
-                sens_train = pop_tr.values if pop_tr is not None else None
-                fit_kwargs = {"clf__sensitive_features": sens_train}
             else:
-                # ------------- multiclass → plain estimator ------------------
-                final_est = base_est
-                fit_kwargs = {}
+                final_est = base_est      # plain classifier
 
             pipe = Pipeline([
                 ("pathway", PathwayFeatureExtractor()),
                 ("pre",     pre),
                 ("clf",     final_est),
             ])
+
+            # ------- FIT -----------------------------------------------------
+            fit_kwargs = {}
+            if not multiclass and pop_tr is not None:
+                fit_kwargs["clf__sensitive_features"] = pop_tr.values
+
             pipe.fit(Xtr, y_tr, **fit_kwargs)
 
-            # predict (pass sensitive_features only if fairness active)
+            # ------- PREDICT -------------------------------------------------
             predict_kwargs = {}
-            if not multiclass:
-                predict_kwargs["clf__sensitive_features"] = (
-                    popte.values if popte is not None else None
-                )
-            y_pred = pipe.predict(Xte, **predict_kwargs)
-            # save confusion matrix
-            class_names = ['benign', 'pathogenic', 'uncertain'] \
-                        if (df["target_encoded"].nunique() == 3) else ['non-path', 'path']
-            plot_confusion(y_test, y_pred, class_names,
-                        f"{model_name}_{mode}_holdout")
-            # -------------------- reporting -------------------------------
+            if not multiclass and popte is not None:
+                predict_kwargs["clf__sensitive_features"] = popte.values
+
+            y_pred = pipe.predict(Xte)
+
+            # ------- REPORT --------------------------------------------------
             self.logger.info(f"\n>> {model_name} + {scaler_name}")
-            self.logger.info(classification_report(
-                y_te, y_pred,
-                target_names=["benign", "pathogenic", "uncertain"]
-            ))
+            tgt_names = (["benign", "pathogenic", "uncertain"]
+                        if multiclass else
+                        ["non-pathogenic", "pathogenic"])
+            self.logger.info(classification_report(y_te, y_pred,
+                                                target_names=tgt_names))
 
             if popte is not None:
                 acc_by_pop = {
-                    pop: accuracy_score(y_te[popte == pop], y_pred[popte == pop])
-                    for pop in popte.unique()
+                    p: accuracy_score(y_te[popte == p], y_pred[popte == p])
+                    for p in popte.unique()
                 }
                 self.logger.info(f"Per-population accuracy: {acc_by_pop}")
             else:
                 acc_by_pop = None
 
-            # optional ACMG + ML hybrid score (unchanged)
-            acmg_int = ACMGPopulationIntegration()
-            if hasattr(pipe, "predict_proba"):
-                ml_probs = pipe.predict_proba(Xte, **predict_kwargs)[:, 1]
-            else:
-                ml_probs = None
-
-            if ml_probs is not None:
-                criteria_lists = (
-                    df.loc[X_te.index, "acmg_criteria"]
-                    if "acmg_criteria" in df.columns else
-                    [[] for _ in range(len(y_pred))]
-                )
-                hybrid = acmg_int.integrate_with_ml_model(
-                    ml_probs, criteria_lists,
-                    popte if popte is not None else [None]*len(y_pred)
-                )
-            else:
-                hybrid = None
-
             results[mode] = {
                 "pipeline":            pipe,
                 "accuracy":            accuracy_score(y_te, y_pred),
                 "population_accuracy": acc_by_pop,
-                "hybrid_scores":       hybrid,
             }
 
-        # ------------------------------------------------------------------
-        # 2. checkpoint & return
-        # ------------------------------------------------------------------
+        # ---------- 2. checkpoint & return -----------------------------------
         self.save_checkpoint("holdout_evaluation", results)
         return results
+
 
 
 
