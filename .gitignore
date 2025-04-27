@@ -178,8 +178,8 @@ cython_debug/
 
 # But keep these SPECIFIC FILES (no extensions)
 !.gitignore
-!README
-!requirements
+!README*
+!requirements*
 
 # Keep these directories AND THEIR CONTENTS (critical!)
 !/src/
