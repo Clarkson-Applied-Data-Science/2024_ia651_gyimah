@@ -1228,26 +1228,31 @@ class GeneticVariantAnalysis:
 
 
     
-        # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     # Hold-out evaluation (multiclass OR binary)
     # ---------------------------------------------------------------------
-    def run_holdout_evaluation(self, df: pd.DataFrame,
+    
+    def run_holdout_evaluation(self,
+                            df: pd.DataFrame,
                             best_models: dict | None = None):
         """
-        Hold-out evaluation (pop-aware vs non-pop pipelines).
+        Hold-out evaluation of                                     ───────────────
+            • population-aware   vs
+            • non-population-aware pipelines.
 
-        • Works for 3-class or binary targets.
-        • Fairness GridSearch is only applied when target is binary.
+        Fairness GridSearch is only attached for **binary** targets.
         """
-        import numpy as np                     # local import to be explicit
-        from sklearn.metrics import (
-            accuracy_score, classification_report,
-        )
+        import numpy as np
+        from sklearn.metrics import (accuracy_score,
+                                    classification_report,
+                                    ConfusionMatrixDisplay)  # NEW
         from fairlearn.reductions import GridSearch, DemographicParity
+        from utils.path_utils import PLOTS_DIR                  # NEW
+        import matplotlib.pyplot as plt                         # NEW
 
         self.logger.info("\n=== Hold-out Evaluation ===")
 
-        # ---------- 0. split -------------------------------------------------
+        # ---------- 0. stratified split ----------------------------------------
         X_tr, X_te, y_tr, y_te, pop_tr, pop_te = (
             self.preprocessor.population_stratified_split(
                 df, test_size=0.20, random_state=42
@@ -1260,21 +1265,17 @@ class GeneticVariantAnalysis:
 
         if best_models is None:
             best_models = {
-                "population_aware":    {"scaler": "standard",
-                                        "model":  "RandomForest"},
-                "nonpopulation_aware": {"scaler": "standard",
-                                        "model":  "RandomForest"},
+                "population_aware":    {"scaler": "standard", "model": "RandomForest"},
+                "nonpopulation_aware": {"scaler": "standard", "model": "RandomForest"},
             }
 
         multiclass = len(np.unique(y_tr)) > 2
         if multiclass:
-            self.logger.info(
-                "Detected multiclass target → fairness reductions are skipped"
-            )
+            self.logger.info("Detected multiclass target → fairness skipped")
 
         results = {}
 
-        # ---------- 1. evaluate both arms ------------------------------------
+        # ---------- 1. evaluate both arms --------------------------------------
         for mode, (Xtr, Xte, popte) in [
             ("population_aware",    (X_tr,    X_te,    pop_te)),
             ("nonpopulation_aware", (X_tr_no, X_te_no, pop_te)),
@@ -1293,16 +1294,19 @@ class GeneticVariantAnalysis:
 
             base_est = self.model_manager.get_model_instance(model_name)
 
-            # ---- optionally wrap with fairness GridSearch (binary only) -----
+            # -- optionally wrap with fairness (binary only) --------------------
             if not multiclass:
-                fair_est  = GridSearch(
+                final_est = GridSearch(
                     estimator=base_est,
                     constraints=DemographicParity(),
                     grid_size=20,
                 )
-                final_est = fair_est
+                fit_kwargs = {"clf__sensitive_features": pop_tr.values}
+                predict_kwargs = {"clf__sensitive_features": popte.values}
             else:
-                final_est = base_est      # plain classifier
+                final_est   = base_est
+                fit_kwargs  = {}
+                predict_kwargs = {}
 
             pipe = Pipeline([
                 ("pathway", PathwayFeatureExtractor()),
@@ -1310,27 +1314,36 @@ class GeneticVariantAnalysis:
                 ("clf",     final_est),
             ])
 
-            # ------- FIT -----------------------------------------------------
-            fit_kwargs = {}
-            if not multiclass and pop_tr is not None:
-                fit_kwargs["clf__sensitive_features"] = pop_tr.values
-
             pipe.fit(Xtr, y_tr, **fit_kwargs)
+            y_pred = pipe.predict(Xte, **predict_kwargs)
 
-            # ------- PREDICT -------------------------------------------------
-            predict_kwargs = {}
-            if not multiclass and popte is not None:
-                predict_kwargs["clf__sensitive_features"] = popte.values
-
-            y_pred = pipe.predict(Xte)
-
-            # ------- REPORT --------------------------------------------------
-            self.logger.info(f"\n>> {model_name} + {scaler_name}")
-            tgt_names = (["benign", "pathogenic", "uncertain"]
+            # -------------- confusion-matrix plot (NEW) -----------------------
+            cls_names = (["benign", "pathogenic", "uncertain"]
                         if multiclass else
                         ["non-pathogenic", "pathogenic"])
-            self.logger.info(classification_report(y_te, y_pred,
-                                                target_names=tgt_names))
+
+            fig, ax = plt.subplots(figsize=(5, 4))
+            ConfusionMatrixDisplay.from_predictions(
+                y_te, y_pred,
+                display_labels=cls_names,
+                cmap="Blues",
+                ax=ax,
+                normalize="true"
+            )
+            ax.set_title(f"{model_name} – {mode.replace('_', ' ')}")
+            out_png = PLOTS_DIR / f"{model_name}_{mode}_holdout.png"
+            fig.tight_layout()
+            fig.savefig(out_png, dpi=120)
+            plt.close(fig)
+            self.logger.info(f"Confusion matrix saved → {out_png}")          # NEW
+            # ------------------------------------------------------------------
+
+            # -------------- metrics & logging ---------------------------------
+            self.logger.info(f"\n>> {model_name} + {scaler_name}")
+            self.logger.info(classification_report(
+                y_te, y_pred,
+                target_names=cls_names
+            ))
 
             if popte is not None:
                 acc_by_pop = {
@@ -1347,9 +1360,10 @@ class GeneticVariantAnalysis:
                 "population_accuracy": acc_by_pop,
             }
 
-        # ---------- 2. checkpoint & return -----------------------------------
+        # ---------- 2. checkpoint & return -------------------------------------
         self.save_checkpoint("holdout_evaluation", results)
         return results
+
 
 
 
