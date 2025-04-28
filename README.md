@@ -224,7 +224,6 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 pip install -r requirements.txt
 ```
 
-
 ## 11. Conclusion
 
 In this work, it was set out to determine whether incorporating population-specific features could improve machine-learning–based classification of human genetic variants. Through a multi-stage pipeline—spanning exploratory data analysis, feature engineering of both sequence and ancestry interactions, rigorous cross-validation, hyperparameter tuning, and a final hold-out evaluation—it has been shown that:
