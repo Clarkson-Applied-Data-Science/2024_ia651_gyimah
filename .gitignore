@@ -183,3 +183,5 @@ model_comparison.png
 /env/
 /data/
 /checkpoints/
+/notebooks/
+/plots/
