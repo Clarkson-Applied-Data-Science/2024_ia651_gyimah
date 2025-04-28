@@ -177,6 +177,7 @@ cython_debug/
 full_cv_metrics.csv
 geneticML.py
 candle_predictor.py
+model_comparison.png
 
 # Ignore the /env directory
 /env/
