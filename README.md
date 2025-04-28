@@ -58,14 +58,16 @@ Practical uses
 * Population‑specific risk assessment for genetic counselling.
 
 ---
-## 4  Process Overview<a name="4-process-overview"></a>
+## 4  Process Overview<a name="4-process-overview"></a>
 ![pipeline](docs/img/pipeline_diagram.png)
-1. **EDA** – imbalance & frequency skews.  
-2. **Feature engineering** – sequence metrics & population interactions.  
-3. **Model comparison** (RF · XGB · LR) on pop vs non‑pop pipelines.  
-4. **Hyper‑parameter search** (`RandomizedSearchCV` / `GridSearchCV`).  
-5. **Hold‑out evaluation** (20 % temporal split).  
-6. **Post‑training utilities** – confusion matrices, fairness gap, model export.
+
+1. **Raw Data** – ingest and null-filter ClinVar + gnomAD extract.  
+2. **EDA** – examine class imbalance & allele-frequency distributions.  
+3. **Feature Engineering** – sequence metrics & population interactions.  
+4. **Model Comparison** – RF, XGB, LR on *pop-aware* vs *non-pop* pipelines.  
+5. **Hyperparameter Tuning** – `RandomizedSearchCV` for trees, `GridSearchCV` for LR.  
+6. **Hold-out Evaluation** – 20 % temporal split with checkpoint resume.  
+7. **Post-training Utilities** – confusion matrices, fairness gap analysis, model export.
 
 ---
 ## 5  Exploratory Data Analysis (EDA)<a name="5-exploratory-data-analysis-eda"></a>
