@@ -4,6 +4,7 @@
 > **Aim**: predict the *clinical significance* of human genetic variants **while explicitly modelling ancestry‑specific context**.
 
 ---
+
 ## 🗂️ Table of Contents
 1. [Project Overview](#1-overview)
 2. [Dataset & Null‑Filtering](#2-dataset--null-filtering)
@@ -20,6 +21,7 @@
 13. [References](#13-references)
 
 ---
+
 ## 1  Overview<a name="1-overview"></a>
 Public genome databases ( **ClinVar**¹, **gnomAD**² ) contain millions of single‑nucleotide variants (SNVs) labelled *benign*, *pathogenic* or *uncertain*.  Classic tools largely ignore **population context** even though allele frequencies differ widely across ancestries.  Our contribution is two‑fold:
 
@@ -27,6 +29,7 @@ Public genome databases ( **ClinVar**¹, **gnomAD**² ) contain millions of sing
 * **Head‑to‑head benchmark** against equivalent *population‑agnostic* models, including both 3‑class *and* binary tasks, with fairness diagnostics.
 
 ---
+
 ## 2  Dataset & Null‑Filtering<a name="2-dataset--null-filtering"></a>
 | Source | Rows (raw) | Rows after filtering | Notes |
 |--------|-----------:|---------------------:|-------|
@@ -48,6 +51,7 @@ Feature snapshot
 ```
 
 ---
+
 ## 3  Prediction Task<a name="3-prediction-task"></a>
 Default **multi‑class**:  
 `benign (0)` · `pathogenic (1)` · `uncertain (2)`  
@@ -58,6 +62,7 @@ Practical uses
 * Population‑specific risk assessment for genetic counselling.
 
 ---
+
 ## 4  Process Overview<a name="4-process-overview"></a>
 
 ### Early Prototype (PoC)
@@ -69,23 +74,24 @@ Before investing in the full feature set, I validated the end-to-end flow with a
 
 ### Full Pipeline Steps
 1. **Raw Data Ingestion & Filtering**  
-   Load ClinVar + gnomAD extract, drop variants with missing/ambiguous clinical labels or multi-allelic indels.  
+       Load ClinVar + gnomAD extract, drop variants with missing/ambiguous clinical labels or multi-allelic indels.  
 2. **Exploratory Data Analysis (EDA)**  
-   Characterize class imbalance and allele-frequency distributions across populations.  
+       Characterize class imbalance and allele-frequency distributions across populations.  
 3. **Feature Engineering**  
-   – **Sequence metrics**: allele length, per-base counts, GC-content  
-   – **Population interactions**: `pop_gene`, `pop_consequence`, `allele_freq_rel`  
+       – **Sequence metrics**: allele length, per-base counts, GC-content  
+       – **Population interactions**: `pop_gene`, `pop_consequence`, `allele_freq_rel`  
 4. **Model Comparison**  
-   Train RandomForest, XGBoost and LogisticRegression on **pop-aware** vs **non-pop** pipelines.  
+       Train RandomForest, XGBoost and LogisticRegression on **pop-aware** vs **non-pop** pipelines.  
 5. **Hyperparameter Tuning**  
-   Use `RandomizedSearchCV` (RF, XGB) and `GridSearchCV` (LR) to optimize model settings.  
+       Use `RandomizedSearchCV` (RF, XGB) and `GridSearchCV` (LR) to optimize model settings.  
 6. **Hold-out Evaluation**  
-   Evaluate on a 20 % temporal split; automatic checkpoint resume avoids re-running earlier stages.  
+       Evaluate on a 20 % temporal split; automatic checkpoint resume avoids re-running earlier stages.  
 7. **Post-training Utilities**  
-   Generate and save confusion matrices for both binary & multi-class modes, plot fairness gaps, and export the best pipelines to `models/`.  
+       Generate and save confusion matrices for both binary & multi-class modes, plot fairness gaps, and export the best pipelines to `models/`.  
 ![pipeline](docs/img/pipeline_diagram.png)
 
 ---
+
 ## 5  Exploratory Data Analysis (EDA)<a name="5-exploratory-data-analysis-eda"></a>
 | Figure | What it shows |
 |--------|---------------|
@@ -95,12 +101,14 @@ Before investing in the full feature set, I validated the end-to-end flow with a
 High‑res PNGs live in **`docs/img/`**.
 
 ---
+
 ## 6  Feature Engineering<a name="6-feature-engineering"></a>
 * **Sequence‑derived** – length, GC‑content, per‑base counts.
 * **Population interactions** – `pop_gene`, `pop_consequence`, `allele_freq_rel` (ratio to pop mean).
 * **Encoding** – One‑hot for categoricals; char‑level `CountVectorizer` for short alleles.
 
 ---
+
 ## 7  Model Fitting & Tuning<a name="7-model-fitting--hyperparameter-tuning"></a>
 ### 7.1 Cross‑validation leaderboard (multi‑class)
 | Model | Scaler | CV Acc ± SD |
@@ -121,6 +129,7 @@ High‑res PNGs live in **`docs/img/`**.
 Full search logs live in **`checkpoints/`**.
 
 ---
+
 ## 8  Validation & Fairness<a name="8-validation--performance-metrics"></a>
 ### 8.1 Hold‑out results – 3‑class
 | Pipeline | Accuracy | F1‑w | Benign F1 | Pathog F1 | Uncert F1 |
@@ -157,6 +166,7 @@ In binary mode the Logistic Regression pipeline actually edges out XGBoost on th
 *Maximum accuracy gap* (pop‑aware XGB): **0.05** (multi) vs **0.04** (binary)  – **~2× lower than non‑pop baselines**.
 
 ---
+
 ## 9  Production & Deployment<a name="9-production--deployment"></a>
 > **Folder layout (key items)**
 > ```text
@@ -177,8 +187,8 @@ In binary mode the Logistic Regression pipeline actually edges out XGBoost on th
 ### 9.1 CLI inference
 ```bash
 python -m post_training_utils.predict \
-       --model models/best_pop_aware_multiclass.pkl \
-       --vcf   examples/one_variant.vcf
+               --model models/best_pop_aware_multiclass.pkl \
+               --vcf   examples/one_variant.vcf
 ```
 ### 9.2 Python API
 ```python
@@ -190,6 +200,7 @@ print(clf.predict_proba(X))
 ```
 
 ---
+
 ## 10  Limitations & Future Improvements<a name="10-limitations--future-improvements"></a>
 * **Label noise** – “uncertain/conflicting” may hide true pathogenicity.
 * **Population imbalance** – fewer East‑Asian & Caribbean samples leads to wider CIs.
@@ -258,6 +269,57 @@ python scripts/plot_lr_binary_cm.py
 ```
 
 
-## License & Ethics
+## 12 License & Ethics
+### 12.1 License
+Code is licensed under the MIT License, permitting free reuse, modification, and distribution with attribution 
+tlo.mit.edu.
 
-## References
+Raw data sources have their own terms: ClinVar submissions are in the public domain under NLM policies 
+Wikipedia; gnomAD aggregate allele‐frequency data are released under CC0 (public domain) .
+
+All OSF-hosted artefacts (raw CSV, checkpoints) are made available under a Creative Commons CC BY 4.0 license via OSF 
+JMD Journal.
+
+### 12.2 Ethics
+Only de-identified, aggregate variant data are used—no individual patient records—ensuring compliance with NIH’s Genomic Data Sharing Policy 
+WIRED.
+
+ClinVar entries derive from community‐submitted clinical interpretations under informed consent 
+Wikipedia.
+
+Privacy is preserved by reporting only population‐level allele frequencies, avoiding any personally identifiable information 
+arXiv.
+
+Fairness assessments and mitigations were conducted using the Fairlearn toolkit to identify and reduce demographic bias in predictions 
+Fairlearn.
+
+Limitations & disclaimers: predictive models are research‐grade and not intended as standalone clinical diagnostic tools; users must consult domain experts.
+
+## 13 References
+1. Richards S. et al. Standards and guidelines for the interpretation of sequence variants: a joint consensus recommendation of the American College of Medical Genetics and Genomics and the Association for Molecular Pathology. Genet Med. 2015;17(5):405–424. 
+ScienceDirect
+
+2. Landrum MJ et al. ClinVar: improving access to variant interpretations and supporting evidence. Nucleic Acids Res. 2018;46(D1):D1062–D1067. 
+Wikipedia
+
+3. Lek M. et al. Analysis of protein-coding genetic variation in 60,706 humans. Nature. 2016;536(7616):285–291.
+
+4. Pedregosa F. et al. Scikit-learn: Machine Learning in Python. J Mach Learn Res. 2011;12:2825–2830. 
+ADS
+
+5. Chen T., Guestrin C. XGBoost: A Scalable Tree Boosting System. Proc. 22nd ACM SIGKDD. 2016:785–794. 
+ResearchGate
+
+6. Fairlearn Contributors. Fairlearn: a toolkit for assessing and improving fairness in AI. Fairlearn; 2025. Available from https://fairlearn.org 
+Fairlearn
+
+7. Torkzadehmahani R. et al. Privacy-preserving Artificial Intelligence Techniques in Biomedicine. arXiv. 2020. 
+arXiv
+
+8. Center for Open Science. Open Science Framework (OSF). OSF; 2025. Available from https://osf.io 
+JMD Journal
+
+9. National Institutes of Health. Genomic Data Sharing Policy. NIH; 2020. Available from https://gds.nih.gov 
+WIRED
+
+10. Richards S. et al. Standards and guidelines for sequence variant interpretation. American College of Medical Genetics and Genomics. Genet Med. 2015;17(5):405–424
