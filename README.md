@@ -215,7 +215,8 @@ pip install -r requirements.txt
 
 ## 11. Reproducing this Project & Downloading Data
 ### 11.1 Clone & Create Environment
-bash# Linux / macOS (conda)
+```bash
+# Linux / macOS (conda)
 conda env create -f environment.yml && conda activate ia651_genomics
 
 # Windows PowerShell (venv)
@@ -223,7 +224,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 pip install -r requirements.txt
-
+```
 
 ### 11.2 Download Raw Data & Checkpoints
 
