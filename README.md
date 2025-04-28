@@ -256,3 +256,8 @@ python -m src.genetic-variant-classifier2 --binary
 # Example: regenerate binary‐LR hold‐out confusion matrices
 python scripts/plot_lr_binary_cm.py
 ```
+
+
+## License & Ethics
+
+## References
