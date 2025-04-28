@@ -37,7 +37,7 @@ Public genome databases ( **ClinVar**¹, **gnomAD**² ) contain millions of sing
 
 * **Missing clinical_significance** → supervised label impossible (‑2 160 304).
 * **Ambiguous labels** (“no assertion”, “somatic”, …) (‑420 987).
-* **Non‑SNV/indels** (multi‑allelic) out‑of‑scope for this PoC.
+* **Non‑SNV/indels** (multi‑allelic) out‑of‑scope for this PoC.f
 </details>
 
 Feature snapshot
@@ -112,13 +112,21 @@ Full search logs live in **`checkpoints/`**.
 | Pop‑Aware RF | 0.75 | 0.76 | 0.76 | 0.87 | 0.63 |
 | Non‑Pop RF | 0.77 | 0.78 | 0.77 | 0.91 | 0.65 |
 
-### 8.1b Hold‑out results – *binary* (`non_path` vs `path`)
-| Pipeline | Accuracy | F1‑w | Non‑path F1 | Path F1 |
-|----------|---------:|------:|-------------:|---------:|
-| **Pop‑Aware XGB** | **0.89** | **0.89** | 0.92 | 0.81 |
-| Non‑Pop XGB       | 0.89 | 0.89 | 0.92 | 0.81 |
-| Pop‑Aware RF      | 0.85 | 0.85 | 0.89 | 0.74 |
-| Non‑Pop RF        | 0.87 | 0.87 | 0.91 | 0.78 |
+> For the **3-class** task, Pop-Aware XGBoost remains top (81 % accuracy, 0.81 F1-w), with non-pop XGB essentially matching.
+
+
+### 8.1b Hold-out results – *binary* (`non_path` vs `path`)
+| Pipeline                  | Accuracy | F1-w | Non-path F1 | Path F1 |
+|---------------------------|---------:|------:|------------:|--------:|
+| **Pop-Aware LogisticReg** | **0.89** | 0.89 | 0.91        | **0.84** |
+| Non-Pop LogisticReg       | 0.89     | 0.89 | 0.91        | **0.84** |
+| **Pop-Aware XGB**         | **0.89** | 0.89 | 0.92        | 0.81    |
+| Non-Pop XGB               | 0.89     | 0.89 | 0.92        | 0.81    |
+| Pop-Aware RF              | 0.85     | 0.85 | 0.89        | 0.74    |
+| Non-Pop RF                | 0.87     | 0.87 | 0.91        | 0.78    |
+
+
+In binary mode the Logistic Regression pipeline actually edges out XGBoost on the pathogenic class (0.84 vs 0.81 F1), tying on overall accuracy (89 %). XGBoost remains competitive on accuracy and group-fairness, but if pathogenic recall is your priority, LR is preferable here.
 
 ### 8.2 Confusion matrices
 | Multiclass | Binary |
