@@ -131,7 +131,7 @@ In binary mode the Logistic Regression pipeline actually edges out XGBoost on th
 ### 8.2 Confusion matrices
 | Multiclass | Binary |
 |------------|--------|
-| ![cm_pop](docs/img/cm_xgb_pop.png) ![cm_nonpop](docs/img/cm_xgb_nonpop.png) | ![cm_bin_pop](docs/img/cm_rf_pop_binary.png) ![cm_bin_nonpop](docs/img/cm_rf_nonpop_binary.png) |
+| ![cm_pop](docs/img/cm_xgb_pop.png) ![cm_nonpop](docs/img/cm_xgb_nonpop.png) | ![cm_bin_pop](docs/img/cm_lr_pop_binary.png) ![cm_bin_nonpop](docs/img/cm_lr_nonpop_binary.png) |
 
 *(matrices normalised by true‑class; full set in `docs/img/`)*
 
