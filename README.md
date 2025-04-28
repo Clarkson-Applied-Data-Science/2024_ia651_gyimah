@@ -232,7 +232,7 @@ Because the raw CSV and checkpoint PKLs exceed GitHub's file-size limits, we hos
 
 | File | OSF URL | Local path |
 | ---- | ------- | ---------- |
-| raw_variant_data.csv (≈2.8 M rows) | https://osf.io/uzvn3/files/osfstorage/680f82fe0889a86a5b7c5bc8 | data/raw_variant_data.csv |
+| raw_variant_data.csv (≈2.8 M rows) | https://files.osf.io/v1/resources/uzvn3/providers/osfstorage/680f81d7d2a2479792568b94/?zip= | data/raw_variant_data.csv |
 | holdout_evaluation_latest.pkl | https://files.osf.io/v1/resources/uzvn3/providers/osfstorage/680f861800fd4bbf355ef649/?zip= | checkpoints/holdout_evaluation_latest.pkl |
 
 ### 11.3 Full Pipeline Run & Runtime
