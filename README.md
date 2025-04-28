@@ -312,6 +312,6 @@ ScienceDirect
 
 8. Center for Open Science. Open Science Framework (OSF). OSF; 2025. Available from https://osf.io 
 
-9. National Institutes of Health. Genomic Data Sharing Policy. NIH; 2020. Available from https://gds.nih.gov 
+9. National Institutes of Health. Genomic Data Sharing Policy. NIH; 2020. Available from https://sharing.nih.gov/genomic-data-sharing-policy 
 
 10. Richards S. et al. Standards and guidelines for sequence variant interpretation. American College of Medical Genetics and Genomics. Genet Med. 2015;17(5):405–424
