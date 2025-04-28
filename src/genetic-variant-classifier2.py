@@ -24,6 +24,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import FeatureHasher
+import shutil
+import pathlib
 
 # Models
 from sklearn.ensemble import RandomForestClassifier
@@ -37,8 +39,11 @@ from sklearn.metrics import (
     classification_report, confusion_matrix, roc_curve, roc_auc_score,
     average_precision_score, precision_recall_curve, auc
 )
+#my custom packages
 from src.utils.post_training_utils import plot_confusion
-from src.utils.path_utils import PLOTS_DIR
+from src.utils.path_utils import PLOTS_DIR 
+from src.utils.path_utils import PLOTS_DIR, CHECKPOINT_DIR, MODELS_DIR, latest_checkpoint
+
 # --------------------------------------------------------------------
 # Silence noisy, non-fatal warnings that clutter the console
 # --------------------------------------------------------------------
@@ -1481,16 +1486,24 @@ def main(*, binary_mode: bool = False) -> None:
         # ------------------------------------------------------------------ #
         # 6. Export the final population-aware pipeline
         # ------------------------------------------------------------------ #
+        
         try:
-            latest_ckpt = "checkpoints/holdout_evaluation_latest.pkl"
-            pop_pipe    = joblib.load(latest_ckpt)["population_aware"]["pipeline"]
+            ckpt = latest_checkpoint("holdout_evaluation")       # <- new helper
+            if ckpt is None:                                     # no pointer yet
+                raise FileNotFoundError("holdout_evaluation_latest.txt not found")
 
-            pathlib.Path("models").mkdir(exist_ok=True)
-            oname = ("models/best_pop_aware_binary.pkl"
-                     if binary_mode
-                     else "models/best_pop_aware_multiclass.pkl")
-            joblib.dump(pop_pipe, oname)
-            logger.info(f"Exported final pipeline → {oname}")
+            data = joblib.load(ckpt)                             # dict with two arms
+            pop_pipe = data["population_aware"]["pipeline"]
+
+            pathlib.Path(MODELS_DIR).mkdir(exist_ok=True)
+            out_name = (
+                "best_pop_aware_binary.pkl" if binary_mode
+                else "best_pop_aware_multiclass.pkl"
+            )
+            out_path = MODELS_DIR / out_name
+            joblib.dump(pop_pipe, out_path)
+
+            logger.info(f"Exported final pipeline →  {out_path}")
         except Exception as ex:
             logger.warning(f"Could not export final model automatically ({ex})")
 

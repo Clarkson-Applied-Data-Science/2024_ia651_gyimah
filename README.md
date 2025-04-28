@@ -1,7 +1,7 @@
 # 2024_ia651_gyimah – Population‑Aware Variant Classification
 
-> **Course**: IA‑651 • **Authors**: Simon Gyimah   
-> **Goal**: build, benchmark & interpret machine‑learning models that predict the *clinical significance* of human genetic variants **while accounting for ancestry‑specific features**.
+> **Course**: IA‑651 • **Author**: **Simon Gyimah**  
+> **Aim**: predict the *clinical significance* of human genetic variants **while explicitly modelling ancestry‑specific context**.
 
 ---
 ## 🗂️ Table of Contents
@@ -12,98 +12,99 @@
 5. [EDA Highlights](#5-exploratory-data-analysis-eda)
 6. [Feature Engineering](#6-feature-engineering)
 7. [Modelling Pipeline](#7-model-fitting--hyperparameter-tuning)
-8. [Evaluation & Fairness](#8-validation--performance-metrics)
+8. [Evaluation & Fairness](#8-validation--performance-metrics)
 9. [Production / CLI Usage](#9-production--deployment)
 10. [Limitations & Future Work](#10-limitations--future-improvements)
-11. [Reproducibility](#11-reproducing-this-project)
+11. [Reproducibility & Runtime](#11-reproducing-this-project)
+12. [Licence & Ethics](#12-licence--ethics)
+13. [References](#13-references)
 
 ---
 ## 1  Overview<a name="1-overview"></a>
-Human‑genome databases such as **ClinVar** and **gnomAD** contain millions of single‑nucleotide variants (SNVs) labelled *benign*, *pathogenic* or *uncertain*.  Correctly predicting a variant’s clinical significance accelerates genetic diagnosis, pharmacogenomics and precision‑medicine workflows.  Classic tools ignore **population context** even though allele frequencies differ widely across ancestries.  
+Public genome databases ( **ClinVar**¹, **gnomAD**² ) contain millions of single‑nucleotide variants (SNVs) labelled *benign*, *pathogenic* or *uncertain*.  Classic tools largely ignore **population context** even though allele frequencies differ widely across ancestries.  Our contribution is two‑fold:
 
-Our contribution:
-* a **population‑aware feature pipeline** (pop × gene & pop × consequence interactions).
-* comparison against equivalent *population‑agnostic* models.
-* fairness and maximum‑adverse‑excursion (MAE pips) analyses.
+* **Population‑aware feature pipeline** – interaction terms `pop × gene`, `pop × consequence`, and frequency‐ratio features.
+* **Head‑to‑head benchmark** against equivalent *population‑agnostic* models, including both 3‑class *and* binary tasks, with fairness diagnostics.
 
 ---
-## 2  Dataset & Null‑Filtering<a name="2-dataset--null-filtering"></a>
+## 2  Dataset & Null‑Filtering<a name="2-dataset--null-filtering"></a>
 | Source | Rows (raw) | Rows after filtering | Notes |
 |--------|-----------:|---------------------:|-------|
-| Aggregated ClinVar + gnomAD extract | **2 847 954** | **374 432** | see filters below |
+| ClinVar + gnomAD aggregate | **2 847 954** | **374 432** | strict label / SNV filters |
 
-### 2.1 Why ~2.5 M rows were dropped
-* **Missing clinical_significance** → cannot train a supervised label (‑2 160 304).
-* **Ambiguous labels** ("no assertion provided", "somatic") → removed (‑420 987).
-* **Non‑SNV/indels** with >1 alternate allele → out‑of‑scope for this PoC.
+<details>
+<summary>Why ~2.5 M rows were dropped</summary>
 
-These steps are critical because noisy/ambiguous labels were shown to degrade F1 by >8 pp in early experiments.
+* **Missing clinical_significance** → supervised label impossible (‑2 160 304).
+* **Ambiguous labels** (“no assertion”, “somatic”, …) (‑420 987).
+* **Non‑SNV/indels** (multi‑allelic) out‑of‑scope for this PoC.
+</details>
 
-### 2.2 Feature snapshot
+Feature snapshot
 ```
-• Variant‑level: position, consequence_type, gene
-• Numeric: allele_freq, allele_count, sample_size, allele_length, GC_content
-• Population: population_name  (African Caribbean, Yoruba, …)  =>  pop_gene, pop_consequence
+• Variant‑level   : position, consequence_type, gene
+• Numeric         : allele_freq, allele_count, sample_size, allele_length, GC_content
+• Population      : population_name (African Caribbean, Yoruba, …)  -->  pop_gene, pop_consequence, allele_freq_rel
 ```
 
 ---
-## 3  Prediction Task<a name="3-prediction-task"></a>
-*Default multi‑class*: **benign (0) · pathogenic (1) · uncertain (2)**  
-*Optional binary flag*: `--binary` collapses benign + uncertain → **non_pathogenic (0)** vs **pathogenic (1)**.
+## 3  Prediction Task<a name="3-prediction-task"></a>
+Default **multi‑class**:  
+`benign (0)` · `pathogenic (1)` · `uncertain (2)`  
+Optional flag `--binary` collapses *benign + uncertain* ⇒ **non_pathogenic (0)** vs **pathogenic (1)**.
 
 Practical uses
 * Triage variants in clinical WGS reports.  
 * Population‑specific risk assessment for genetic counselling.
 
 ---
-## 4  Process Overview<a name="4-process-overview"></a>
+## 4  Process Overview<a name="4-process-overview"></a>
 ![pipeline](docs/img/pipeline_diagram.png)
-
-1. **EDA** → understand class imbalance & allele‑frequency distributions.  
-2. **Feature engineering** → sequence metrics, population interactions.  
-3. **Model family comparison** (RF · XGB · LR) on *pop* vs *non‑pop* pipelines.  
-4. **Hyper‑parameter tuning** via `RandomizedSearchCV` (trees) & `GridSearchCV` (LR).  
-5. **Hold‑out evaluation** on 20 % time‑stratified split.  
-6. **Post‑training** utilities: export best pickle, confusion matrices, SHAP plots.
+1. **EDA** – imbalance & frequency skews.  
+2. **Feature engineering** – sequence metrics & population interactions.  
+3. **Model comparison** (RF · XGB · LR) on pop vs non‑pop pipelines.  
+4. **Hyper‑parameter search** (`RandomizedSearchCV` / `GridSearchCV`).  
+5. **Hold‑out evaluation** (20 % temporal split).  
+6. **Post‑training utilities** – confusion matrices, fairness gap, model export.
 
 ---
-## 5  Exploratory Data Analysis (EDA)<a name="5-exploratory-data-analysis-eda"></a>
+## 5  Exploratory Data Analysis (EDA)<a name="5-exploratory-data-analysis-eda"></a>
 | Figure | What it shows |
 |--------|---------------|
-| ![dist](docs/img/EDA_class_distribution.png) | Class imbalance (uncertain ≈ 17 %, benign ≈ 34 %, pathogenic ≈ 49 %). |
-| ![corr](docs/img/EDA_corr_matrix.png) | Numeric‑feature correlations (allele_freq ↔ allele_count ρ = 0.91). |
+| ![dist](docs/img/EDA_class_distribution.png) | Class imbalance (uncertain ≈ 17 %, benign ≈ 34 %, pathogenic ≈ 49 %). |
+| ![corr](docs/img/EDA_corr_matrix.png)        | Numeric correlation (allele_freq ↔ allele_count ρ ≈ 0.91). |
 
-Additional histograms are in `docs/img/`.
-
----
-## 6  Feature Engineering<a name="6-feature-engineering"></a>
-* **Sequence‑derived**: body length, GC‑content, per‑base counts.  
-* **Population interactions**: `pop_gene`, `pop_consequence`, `allele_freq_rel` (ratio to population mean).  
-* **Encoding**: One‑hot for categoricals; char‑level `CountVectorizer` for short alleles.
+High‑res PNGs live in **`docs/img/`**.
 
 ---
-## 7  Model Fitting & Hyper‑parameter Tuning<a name="7-model-fitting--hyperparameter-tuning"></a>
-### 7.1 Cross‑validation leaderboard
-| Model | Scaler | CV Acc ± SD |
+## 6  Feature Engineering<a name="6-feature-engineering"></a>
+* **Sequence‑derived** – length, GC‑content, per‑base counts.
+* **Population interactions** – `pop_gene`, `pop_consequence`, `allele_freq_rel` (ratio to pop mean).
+* **Encoding** – One‑hot for categoricals; char‑level `CountVectorizer` for short alleles.
+
+---
+## 7  Model Fitting & Tuning<a name="7-model-fitting--hyperparameter-tuning"></a>
+### 7.1 Cross‑validation leaderboard (multi‑class)
+| Model | Scaler | CV Acc ± SD |
 |-------|--------|-------------|
 | RandomForest | Standard | **0.769 ± 0.004** |
-| XGBoost | Standard | **0.824 ± 0.003** |
-| Logistic Reg | Standard | 0.768 ± 0.006 |
+| XGBoost      | Standard | **0.824 ± 0.003** |
+| LogisticReg  | Standard | 0.768 ± 0.006 |
 
 *(5‑fold GroupKFold by population)*
 
 ### 7.2 Best hyper‑parameters
-| Family | Parameters (grid) |
-|--------|-------------------|
-| RF | `n_estimators=100, max_depth=15, min_samples_leaf=1` |
+| Family | Parameters |
+|--------|------------|
+| RF  | `n_estimators=100, max_depth=15, min_samples_leaf=1` |
 | XGB | `n_estimators=200, max_depth=7, lr=0.1, reg_lambda=10` |
 | LR  | `C=0.1, penalty=l2, solver=liblinear` |
 
-Full search logs live in `checkpoints/`.
+Full search logs live in **`checkpoints/`**.
 
 ---
-## 8  Validation & Performance Metrics<a name="8-validation--performance-metrics"></a>
-### 8.1 Hold‑out results (20 % split)
+## 8  Validation & Fairness<a name="8-validation--performance-metrics"></a>
+### 8.1 Hold‑out results – 3‑class
 | Pipeline | Accuracy | F1‑w | Benign F1 | Pathog F1 | Uncert F1 |
 |----------|---------:|------:|-----------:|-----------:|-----------:|
 | **Pop‑Aware XGB** | **0.81** | **0.81** | 0.85 | 0.92 | 0.59 |
@@ -111,55 +112,75 @@ Full search logs live in `checkpoints/`.
 | Pop‑Aware RF | 0.75 | 0.76 | 0.76 | 0.87 | 0.63 |
 | Non‑Pop RF | 0.77 | 0.78 | 0.77 | 0.91 | 0.65 |
 
-*Bold* = best overall.  Population features gave **+6–9 pp accuracy** for some African & East‑Asian groups (see detailed table in `docs/img/pop_accuracy_bar.png`).
+### 8.1b Hold‑out results – *binary* (`non_path` vs `path`)
+| Pipeline | Accuracy | F1‑w | Non‑path F1 | Path F1 |
+|----------|---------:|------:|-------------:|---------:|
+| **Pop‑Aware XGB** | **0.89** | **0.89** | 0.92 | 0.81 |
+| Non‑Pop XGB       | 0.89 | 0.89 | 0.92 | 0.81 |
+| Pop‑Aware RF      | 0.85 | 0.85 | 0.89 | 0.74 |
+| Non‑Pop RF        | 0.87 | 0.87 | 0.91 | 0.78 |
 
 ### 8.2 Confusion matrices
-![cm_pop](docs/img/cm_xgb_pop.png) ![cm_nonpop](docs/img/cm_xgb_nonpop.png)
+| Multiclass | Binary |
+|------------|--------|
+| ![cm_pop](docs/img/cm_xgb_pop.png) ![cm_nonpop](docs/img/cm_xgb_nonpop.png) | ![cm_bin_pop](docs/img/cm_rf_pop_binary.png) ![cm_bin_nonpop](docs/img/cm_rf_nonpop_binary.png) |
+
+*(matrices normalised by true‑class; full set in `docs/img/`)*
 
 ### 8.3 Fairness snapshot
-*Maximum accuracy gap* (pop‑aware XGB) = **0.05** vs **0.10** for non‑pop.
+*Maximum accuracy gap* (pop‑aware XGB): **0.05** (multi) vs **0.04** (binary)  – **~2× lower than non‑pop baselines**.
 
 ---
-## 9  Production & Deployment<a name="9-production--deployment"></a>
+## 9  Production & Deployment<a name="9-production--deployment"></a>
+> **Folder layout (key items)**
+> ```text
+> 2024_ia651_gyimah/
+> ├─ src/                  ← all python code
+> │  └─ utils/             ← helper modules (plots, paths, …)
+> ├─ data/                 ← raw_variant_data.csv
+> ├─ checkpoints/          ← auto‑saved joblib checkpoints
+> ├─ models/               ← exported best_pop_aware_<mode>.pkl
+> └─ docs/img/             ← confusion matrices & EDA PNGs
+> ```
+>
+> After each run the script **automatically exports** the best pop‑aware pipeline to
+> `models/best_pop_aware_binary.pkl` **or** `models/best_pop_aware_multiclass.pkl`.
+
 ### 9.1 CLI inference
 ```bash
 python -m post_training_utils.predict \
-       --model models/xgboost_pop.pkl \
+       --model models/best_pop_aware_multiclass.pkl \
        --vcf   examples/one_variant.vcf
 ```
 ### 9.2 Python API
 ```python
 from joblib import load
 from post_training_utils import featurise_variant
-clf = load("models/xgboost_pop.pkl")
+clf = load("models/best_pop_aware_multiclass.pkl")
 X = featurise_variant(vcf_record)
 print(clf.predict_proba(X))
 ```
----
-## 10  Limitations & Future Improvements<a name="10-limitations--future-improvements"></a>
-* **Label noise**: ClinVar “uncertain/conflicting” may hide true pathogenicity.  
-* **Population imbalance**: fewer East‑Asian & Caribbean samples → wider CIs.  
-* **Short‑read bias**: large indels excluded; future work: *hg38* liftover & SV support.  
-* **Deep models**: try CNN on reference‑window seq; transformer embeddings.
 
 ---
-## 11  Reproducing this project<a name="11-reproducing-this-project"></a>
+## 10  Limitations & Future Improvements<a name="10-limitations--future-improvements"></a>
+* **Label noise** – “uncertain/conflicting” may hide true pathogenicity.
+* **Population imbalance** – fewer East‑Asian & Caribbean samples leads to wider CIs.
+* **Short‑read bias** – large indels excluded; future work: *hg38* liftover & SV support.
+* **Deep models** – explore CNN on ±50 bp window; transformer embeddings.
+
+---
+## 11  Reproducing this Project & Runtime<a name="11-reproducing-this-project"></a>
 ```bash
-# 1. Clone & install
+# 1. clone & create env (conda example)
 conda env create -f environment.yml && conda activate ia651_genomics
+#   – or –  Windows/PowerShell users
+# .\.venv\Scripts\Activate.ps1 ; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-# 2. Run full 3‑class pipeline
-python genetic-variant-classifier2.py
+# 2. full 3‑class run (~5 h first time on 8‑core laptop, 16 GB RAM)
+python -m src.genetic-variant-classifier2
 
-# 3. Optional binary run
-python genetic-variant-classifier2.py --binary
+# 3. optional binary run (same command with --binary)
+python -m src.genetic-variant-classifier2 --binary
 
-# 4. Export best model + plots
-python -m post_training_utils.export_best --family XGBoost
-```
-All intermediate artefacts are cached in **checkpoints/**; complete re‑run takes ≈ 5 h on an 8‑core laptop.
-
----
-### ✨ Acknowledgements
-*Lecturer*: Dr Michael Gilbert(IA‑651).  *Data Sources*: ClinVar, gnomAD.
+#  »
 

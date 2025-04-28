@@ -16,3 +16,16 @@ PLOTS_DIR.mkdir(exist_ok=True)
 
 MODELS_DIR     = ROOT_DIR / "models"
 MODELS_DIR.mkdir(exist_ok=True)
+
+# ---------------------------------------------------------------------
+# helper: give me the path of the *real* latest pickle for a stage
+# ---------------------------------------------------------------------
+def latest_checkpoint(stage: str) -> Path | None:
+    """
+    Returns Path('checkpoints/<stage>_<timestamp>.pkl') or None
+    depending on whether the text pointer exists.
+    """
+    ptr = CHECKPOINT_DIR / f"{stage}_latest.txt"
+    if ptr.exists():
+        return Path(ptr.read_text().strip())
+    return None
