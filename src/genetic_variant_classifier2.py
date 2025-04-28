@@ -1432,10 +1432,10 @@ def main(*, binary_mode: bool = False) -> None:
     ----------
     binary_mode : bool
         False  → 3-class training (benign / pathogenic / uncertain)  ← default  
-        True   → 2-class training (pathogenic  vs  non-pathogenic)
+        True   → 2-class training (pathogenic vs non-pathogenic)
     """
     FILE_PATH = "data/raw_variant_data.csv"
-    logger     = Logger()
+    logger = Logger()
 
     try:
         analysis = GeneticVariantAnalysis(FILE_PATH, logger)
@@ -1476,7 +1476,6 @@ def main(*, binary_mode: bool = False) -> None:
         logger.info("\n=== Running Hold-out Evaluation ===")
         for winner in ("RandomForest", "XGBoost", "LogisticRegression"):
             logger.info(f"\n*** Hold-out results for {winner} ***")
-
             best_models = {
                 "population_aware":    {"scaler": "standard", "model": winner},
                 "nonpopulation_aware": {"scaler": "standard", "model": winner},
@@ -1484,28 +1483,40 @@ def main(*, binary_mode: bool = False) -> None:
             analysis.run_holdout_evaluation(df_pop, best_models=best_models)
 
         # ------------------------------------------------------------------ #
-        # 6. Export the final population-aware pipeline
+        # 6. Export the final pipelines
         # ------------------------------------------------------------------ #
-        
         try:
-            ckpt = latest_checkpoint("holdout_evaluation")       # <- new helper
-            if ckpt is None:                                     # no pointer yet
+            ckpt = latest_checkpoint("holdout_evaluation")
+            if ckpt is None:
                 raise FileNotFoundError("holdout_evaluation_latest.txt not found")
 
-            data = joblib.load(ckpt)                             # dict with two arms
-            pop_pipe = data["population_aware"]["pipeline"]
+            data = joblib.load(ckpt)
 
-            pathlib.Path(MODELS_DIR).mkdir(exist_ok=True)
-            out_name = (
-                "best_pop_aware_binary.pkl" if binary_mode
+            # — population-aware
+            pop_pipe = data["population_aware"]["pipeline"]
+            pathlib.Path(MODELS_DIR).mkdir(exist_ok=True, parents=True)
+            pop_name = (
+                "best_pop_aware_binary.pkl"
+                if binary_mode
                 else "best_pop_aware_multiclass.pkl"
             )
-            out_path = MODELS_DIR / out_name
-            joblib.dump(pop_pipe, out_path)
+            pop_path = MODELS_DIR / pop_name
+            joblib.dump(pop_pipe, pop_path)
+            logger.info(f"Exported population-aware pipeline → {pop_path}")
 
-            logger.info(f"Exported final pipeline →  {out_path}")
+            # — non-population-aware
+            nonpop_pipe = data["nonpopulation_aware"]["pipeline"]
+            nonpop_name = (
+                "best_nonpop_aware_binary.pkl"
+                if binary_mode
+                else "best_nonpop_aware_multiclass.pkl"
+            )
+            nonpop_path = MODELS_DIR / nonpop_name
+            joblib.dump(nonpop_pipe, nonpop_path)
+            logger.info(f"Exported non-population-aware pipeline → {nonpop_path}")
+
         except Exception as ex:
-            logger.warning(f"Could not export final model automatically ({ex})")
+            logger.warning(f"Could not export pipelines automatically ({ex})")
 
     except Exception as e:
         logger.error(f"Fatal error: {e}", exc_info=True)
