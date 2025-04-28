@@ -197,18 +197,59 @@ print(clf.predict_proba(X))
 * **Deep models** – explore CNN on ±50 bp window; transformer embeddings.
 
 ---
-## 11  Reproducing this Project & Runtime<a name="11-reproducing-this-project"></a>
-```bash
-# 1. clone & create env (conda example)
-conda env create -f environment.yml && conda activate ia651_genomics
-#   – or –  Windows/PowerShell users
-# .\.venv\Scripts\Activate.ps1 ; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-# 2. full 3‑class run (~5 h first time on 8‑core laptop, 16 GB RAM)
+## 11. Reproducing this Project & Downloading Data
+
+### 11.1 Clone & Create Environment
+
+```bash
+# Linux / macOS (conda)
+conda env create -f environment.yml && conda activate ia651_genomics
+
+# Windows PowerShell (venv)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+pip install -r requirements.txt
+```
+
+## 11. Reproducing this Project & Downloading Data
+### 11.1 Clone & Create Environment
+bash# Linux / macOS (conda)
+conda env create -f environment.yml && conda activate ia651_genomics
+
+# Windows PowerShell (venv)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+pip install -r requirements.txt
+
+
+### 11.2 Download Raw Data & Checkpoints
+
+Because the raw CSV and checkpoint PKLs exceed GitHub's file-size limits, we host them on OSF. After downloading, place them under your project root:
+
+| File | OSF URL | Local path |
+| ---- | ------- | ---------- |
+| raw_variant_data.csv (≈2.8 M rows) | https://osf.io/⟨MY-OSF-ID⟩/rawfiles/data/raw_variant_data.csv | data/raw_variant_data.csv |
+| holdout_evaluation_latest.pkl | https://osf.io/⟨MY-OSF-ID⟩/rawfiles/checkpoints/holdout_evaluation_latest.pkl | checkpoints/holdout_evaluation_latest.pkl |
+
+### 11.3 Full Pipeline Run & Runtime
+
+```bash
+# Full 3-class analysis (≈5 h first time on Intel i5-1035G1, 4-core/8-thread, 12 GB RAM)
 python -m src.genetic-variant-classifier2
 
-# 3. optional binary run (same command with --binary)
+# Optional binary run
 python -m src.genetic-variant-classifier2 --binary
+```
 
-#  »
+> Note: Checkpoints are saved at each major stage (checkpoints/).
+> Once you've done the full 5 h run once, subsequent runs will resume instantly from the last checkpoint for EDA, CV, model‐comparison, hyperparameter‐tuning or hold-out evaluation—no need to reprocess everything from scratch.
 
+### 11.4 Quick Plot Reproduction
+
+```bash
+# Example: regenerate binary‐LR hold‐out confusion matrices
+python scripts/plot_lr_binary_cm.py
+```
