@@ -62,7 +62,7 @@ Practical uses
 ![pipeline](docs/img/pipeline_diagram.png)
 
 ### Early Prototype (PoC)
-Before investing in the full feature set, we validated our end-to-end flow with a quick proof-of-concept:
+Before investing in the full feature set, I validated the end-to-end flow with a quick proof-of-concept:
 - **Model**: RandomForest on the filtered SNV subset (~374 K rows)  
 - **Outcome**: ~0.70 overall accuracy, but up to **20 pp** accuracy gap between ancestry groups  
 - **Takeaway**: clear need for population-aware features to close fairness gaps  
