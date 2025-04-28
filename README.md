@@ -61,13 +61,29 @@ Practical uses
 ## 4  Process Overview<a name="4-process-overview"></a>
 ![pipeline](docs/img/pipeline_diagram.png)
 
-1. **Raw Data** – ingest and null-filter ClinVar + gnomAD extract.  
-2. **EDA** – examine class imbalance & allele-frequency distributions.  
-3. **Feature Engineering** – sequence metrics & population interactions.  
-4. **Model Comparison** – RF, XGB, LR on *pop-aware* vs *non-pop* pipelines.  
-5. **Hyperparameter Tuning** – `RandomizedSearchCV` for trees, `GridSearchCV` for LR.  
-6. **Hold-out Evaluation** – 20 % temporal split with checkpoint resume.  
-7. **Post-training Utilities** – confusion matrices, fairness gap analysis, model export.
+### Early Prototype (PoC)
+Before investing in the full feature set, we validated our end-to-end flow with a quick proof-of-concept:
+- **Model**: RandomForest on the filtered SNV subset (~374 K rows)  
+- **Outcome**: ~0.70 overall accuracy, but up to **20 pp** accuracy gap between ancestry groups  
+- **Takeaway**: clear need for population-aware features to close fairness gaps  
+![PoC baseline](docs/img/poc_baseline.png)
+
+### Full Pipeline Steps
+1. **Raw Data Ingestion & Filtering**  
+   Load ClinVar + gnomAD extract, drop variants with missing/ambiguous clinical labels or multi-allelic indels.  
+2. **Exploratory Data Analysis (EDA)**  
+   Characterize class imbalance and allele-frequency distributions across populations.  
+3. **Feature Engineering**  
+   – **Sequence metrics**: allele length, per-base counts, GC-content  
+   – **Population interactions**: `pop_gene`, `pop_consequence`, `allele_freq_rel`  
+4. **Model Comparison**  
+   Train RandomForest, XGBoost and LogisticRegression on **pop-aware** vs **non-pop** pipelines.  
+5. **Hyperparameter Tuning**  
+   Use `RandomizedSearchCV` (RF, XGB) and `GridSearchCV` (LR) to optimize model settings.  
+6. **Hold-out Evaluation**  
+   Evaluate on a 20 % temporal split; automatic checkpoint resume avoids re-running earlier stages.  
+7. **Post-training Utilities**  
+   Generate and save confusion matrices for both binary & multi-class modes, plot fairness gaps, and export the best pipelines to `models/`.  
 
 ---
 ## 5  Exploratory Data Analysis (EDA)<a name="5-exploratory-data-analysis-eda"></a>
