@@ -245,7 +245,7 @@ python -m src.genetic-variant-classifier2
 python -m src.genetic-variant-classifier2 --binary
 ```
 
-> NB: if you want to run the pipeline from scratch, do not download the checkpoint files. 
+> NB: if you want to run the pipeline from scratch, do not download the checkpoint files.
 
 > Note: Checkpoints are saved at each major stage (checkpoints/).
 > Once you've done the full 5 h run once, subsequent runs will resume instantly from the last checkpoint for EDA, CV, model‐comparison, hyperparameter‐tuning or hold-out evaluation—no need to reprocess everything from scratch.
