@@ -171,6 +171,7 @@ In binary mode the Logistic Regression pipeline actually edges out XGBoost on th
 >
 > After each run the script **automatically exports** the best pop‑aware pipeline to
 > `models/best_pop_aware_binary.pkl` **or** `models/best_pop_aware_multiclass.pkl`.
+>
 > Please note that the file size for the raw data was too large to upload to github. Similarly, the saved houldout pkl files were too large to upload to github. So these files aren't in the repository
 
 ### 9.1 CLI inference
