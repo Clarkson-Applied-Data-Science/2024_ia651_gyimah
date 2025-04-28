@@ -300,26 +300,21 @@ Limitations & disclaimers: predictive models are research‐grade and not intend
 ScienceDirect
 
 2. Landrum MJ et al. ClinVar: improving access to variant interpretations and supporting evidence. Nucleic Acids Res. 2018;46(D1):D1062–D1067. 
-Wikipedia
 
 3. Lek M. et al. Analysis of protein-coding genetic variation in 60,706 humans. Nature. 2016;536(7616):285–291.
 
 4. Pedregosa F. et al. Scikit-learn: Machine Learning in Python. J Mach Learn Res. 2011;12:2825–2830. 
-ADS
 
 5. Chen T., Guestrin C. XGBoost: A Scalable Tree Boosting System. Proc. 22nd ACM SIGKDD. 2016:785–794. 
-ResearchGate
+
 
 6. Fairlearn Contributors. Fairlearn: a toolkit for assessing and improving fairness in AI. Fairlearn; 2025. Available from https://fairlearn.org 
-Fairlearn
+
 
 7. Torkzadehmahani R. et al. Privacy-preserving Artificial Intelligence Techniques in Biomedicine. arXiv. 2020. 
-arXiv
 
 8. Center for Open Science. Open Science Framework (OSF). OSF; 2025. Available from https://osf.io 
-JMD Journal
 
 9. National Institutes of Health. Genomic Data Sharing Policy. NIH; 2020. Available from https://gds.nih.gov 
-WIRED
 
 10. Richards S. et al. Standards and guidelines for sequence variant interpretation. American College of Medical Genetics and Genomics. Genet Med. 2015;17(5):405–424
