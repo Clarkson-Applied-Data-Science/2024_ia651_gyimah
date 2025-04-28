@@ -59,7 +59,6 @@ Practical uses
 
 ---
 ## 4  Process Overview<a name="4-process-overview"></a>
-![pipeline](docs/img/pipeline_diagram.png)
 
 ### Early Prototype (PoC)
 Before investing in the full feature set, I validated the end-to-end flow with a quick proof-of-concept:
@@ -84,6 +83,7 @@ Before investing in the full feature set, I validated the end-to-end flow with a
    Evaluate on a 20 % temporal split; automatic checkpoint resume avoids re-running earlier stages.  
 7. **Post-training Utilities**  
    Generate and save confusion matrices for both binary & multi-class modes, plot fairness gaps, and export the best pipelines to `models/`.  
+![pipeline](docs/img/pipeline_diagram.png)
 
 ---
 ## 5  Exploratory Data Analysis (EDA)<a name="5-exploratory-data-analysis-eda"></a>
