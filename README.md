@@ -6,19 +6,19 @@
 ---
 
 ## 🗂️ Table of Contents
-1. [Project Overview](#1-overview)
-2. [Dataset & Null‑Filtering](#2-dataset--null-filtering)
-3. [Prediction Task](#3-prediction-task)
-4. [Process Narrative](#4-process-overview)
-5. [EDA Highlights](#5-exploratory-data-analysis-eda)
-6. [Feature Engineering](#6-feature-engineering)
-7. [Modelling Pipeline](#7-model-fitting--hyperparameter-tuning)
-8. [Evaluation & Fairness](#8-validation--performance-metrics)
-9. [Production / CLI Usage](#9-production--deployment)
-10. [Limitations & Future Work](#10-limitations--future-improvements)
-11. [Reproducibility & Runtime](#11-reproducing-this-project)
-12. [Licence & Ethics](#12-licence--ethics)
-13. [References](#13-references)
+2. [Dataset & Null-Filtering](#2-dataset--null-filtering)  
+3. [Prediction Task](#3-prediction-task)  
+4. [Process Narrative](#4-process-overview)  
+5. [EDA Highlights](#5-exploratory-data-analysis-eda)  
+6. [Feature Engineering](#6-feature-engineering)  
+7. [Modelling Pipeline](#7-model-fitting--hyperparameter-tuning)  
+8. [Evaluation & Fairness](#8-validation--performance-metrics)  
+9. [Production / CLI Usage](#9-production--deployment)  
+10. [Limitations & Future Work](#10-limitations--future-improvements)  
+11. [Conclusion](#11-conclusion)  
+12. [Reproducibility & Runtime](#12-reproducing-this-project)  
+13. [Licence & Ethics](#13-licence--ethics)  
+14. [References](#14-references) 
 
 ---
 
@@ -224,8 +224,25 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 pip install -r requirements.txt
 ```
 
-## 11. Reproducing this Project & Downloading Data
-### 11.1 Clone & Create Environment
+
+## 11. Conclusion
+
+In this work, it was set out to determine whether incorporating population-specific features could improve machine-learning–based classification of human genetic variants. Through a multi-stage pipeline—spanning exploratory data analysis, feature engineering of both sequence and ancestry interactions, rigorous cross-validation, hyperparameter tuning, and a final hold-out evaluation—it has been shown that:
+
+Population-aware pipelines can narrow performance disparities across ancestry groups, reducing the maximum accuracy gap by up to half compared to non-population-aware models in the binary setting.
+
+Model family performance varies by task: XGBoost remains the top performer on the three-class (“benign / pathogenic / uncertain”) problem, while Logistic Regression—once tuned—emerges strongest for the binary (“non-pathogenic / pathogenic”) classification.
+
+Fairness constraints (via Fairlearn’s GridSearch) are feasible in the binary context, but provide limited gains in the multiclass setting.
+
+Checkpointing and modular design allow incremental development and near-instantaneous experimentation once the initial 4–5 hour run is complete, dramatically improving reproducibility and iteration speed.
+
+Collectively, these findings validate the original hypothesis that ancestry-informed features can both boost overall accuracy and promote equitable performance across diverse populations. The open-source, dual-licensed framework we provide can serve as a robust foundation for downstream integration into clinical genomics pipelines, with hooks for future extensions—such as deep-learning on raw sequence windows, expanded structural-variant support, or integration of protein-impact scores.
+
+It is anticipated that this work will not only provide some guide for practitioners in building fairer variant classifiers but also inspire further research into the interplay of genetic background and machine-learning–driven genomic interpretation.
+
+## 12. Reproducing this Project & Downloading Data
+### 12.1 Clone & Create Environment
 ```bash
 # Linux / macOS (conda)
 conda env create -f environment.yml && conda activate ia651_genomics
@@ -237,7 +254,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 pip install -r requirements.txt
 ```
 
-### 11.2 Download Raw Data & Checkpoints
+### 12.2 Download Raw Data & Checkpoints
 
 Because the raw CSV and checkpoint PKLs exceed GitHub's file-size limits, we host them on OSF. After downloading, place them under your project root:
 
@@ -246,7 +263,7 @@ Because the raw CSV and checkpoint PKLs exceed GitHub's file-size limits, we hos
 | raw_variant_data.csv (≈2.8 M rows) | https://files.osf.io/v1/resources/uzvn3/providers/osfstorage/680f81d7d2a2479792568b94/?zip= | data/raw_variant_data.csv |
 | holdout_evaluation_latest.pkl | https://files.osf.io/v1/resources/uzvn3/providers/osfstorage/680f861800fd4bbf355ef649/?zip= | checkpoints/holdout_evaluation_latest.pkl |
 
-### 11.3 Full Pipeline Run & Runtime
+### 12.3 Full Pipeline Run & Runtime
 
 ```bash
 # Full 3-class analysis (≈5 h first time on Intel i5-1035G1, 4-core/8-thread, 12 GB RAM)
@@ -261,7 +278,7 @@ python -m src.genetic-variant-classifier2 --binary
 > Note: Checkpoints are saved at each major stage (checkpoints/).
 > Once you've done the full 5 h run once, subsequent runs will resume instantly from the last checkpoint for EDA, CV, model‐comparison, hyperparameter‐tuning or hold-out evaluation—no need to reprocess everything from scratch.
 
-### 11.4 Quick Plot Reproduction
+### 12.4 Quick Plot Reproduction
 
 ```bash
 # Example: regenerate binary‐LR hold‐out confusion matrices
@@ -269,8 +286,8 @@ python scripts/plot_lr_binary_cm.py
 ```
 
 
-## 12 License & Ethics
-### 12.1 License
+## 13 License & Ethics
+### 13.1 License
 This pipeline (all scripts and every single code associated with this project) offer this software under a dual-licensing scheme:
 
 1. Open-Source (MIT)
@@ -282,7 +299,7 @@ Commercial deployments—defined as any use that generates direct or indirect re
 >How to Obtain a Commercial License
 Please contact the author at [simon.gyimah2@gmail.com] with a brief description of your intended use and revenue model. We will draft a simple agreement specifying royalty rates and reporting obligations.
 
-### 12.2 Ethical Use
+### 13.2 Ethical Use
 A strong belief in responsible data science and genetics research is maintained. By using this software, an agreement is made to:
 * Respect personal and population privacy when handling genomic data.
 
@@ -292,7 +309,7 @@ A strong belief in responsible data science and genetics research is maintained.
 
 * Comply with relevant laws and guidelines, including the Universal Declaration of Human Rights and any applicable local bioethics regulations.
 
-## 13 References
+## 14 References
 1. Richards S. et al. Standards and guidelines for the interpretation of sequence variants: a joint consensus recommendation of the American College of Medical Genetics and Genomics and the Association for Molecular Pathology. Genet Med. 2015;17(5):405–424. 
 ScienceDirect
 
