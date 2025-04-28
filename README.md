@@ -271,29 +271,26 @@ python scripts/plot_lr_binary_cm.py
 
 ## 12 License & Ethics
 ### 12.1 License
-Code is licensed under the MIT License, permitting free reuse, modification, and distribution with attribution 
-tlo.mit.edu.
+This pipeline (all scripts and every single code associated with this project) offer this software under a dual-licensing scheme:
 
-Raw data sources have their own terms: ClinVar submissions are in the public domain under NLM policies 
-Wikipedia; gnomAD aggregate allele‐frequency data are released under CC0 (public domain) .
+1. Open-Source (MIT)
+All non-commercial use is licensed under the MIT License. The MIT License is a permissive, OSI-approved license that allows use, modification, and distribution with minimal obligations.
 
-All OSF-hosted artefacts (raw CSV, checkpoints) are made available under a Creative Commons CC BY 4.0 license via OSF 
-JMD Journal.
+2. Commercial Use
+Commercial deployments—defined as any use that generates direct or indirect revenue—are not covered under the MIT terms. Instead, a separate commercial license is required, which includes a negotiated revenue-share agreement (e.g., 5–10 % of net revenues derived from products or services that incorporate this pipeline). This approach—common in “dual licensing” models—ensures that academic work benefits the community while also providing compensation when used in profit-making contexts.
 
-### 12.2 Ethics
-Only de-identified, aggregate variant data are used—no individual patient records—ensuring compliance with NIH’s Genomic Data Sharing Policy 
-WIRED.
+>How to Obtain a Commercial License
+Please contact the author at [simon.gyimah2@gmail.com] with a brief description of your intended use and revenue model. We will draft a simple agreement specifying royalty rates and reporting obligations.
 
-ClinVar entries derive from community‐submitted clinical interpretations under informed consent 
-Wikipedia.
+### 12.2 Ethical Use
+A strong belief in responsible data science and genetics research is maintained. By using this software, an agreement is made to:
+* Respect personal and population privacy when handling genomic data.
 
-Privacy is preserved by reporting only population‐level allele frequencies, avoiding any personally identifiable information 
-arXiv.
+* Obtain all necessary consents and ethics approvals before processing any human-derived datasets.
 
-Fairness assessments and mitigations were conducted using the Fairlearn toolkit to identify and reduce demographic bias in predictions 
-Fairlearn.
+* Abstain from any use that could harm individuals or communities (e.g., attempts at unethical surveillance or discriminatory decision-making).
 
-Limitations & disclaimers: predictive models are research‐grade and not intended as standalone clinical diagnostic tools; users must consult domain experts.
+* Comply with relevant laws and guidelines, including the Universal Declaration of Human Rights and any applicable local bioethics regulations.
 
 ## 13 References
 1. Richards S. et al. Standards and guidelines for the interpretation of sequence variants: a joint consensus recommendation of the American College of Medical Genetics and Genomics and the Association for Molecular Pathology. Genet Med. 2015;17(5):405–424. 
