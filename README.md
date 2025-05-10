@@ -23,7 +23,7 @@
 ---
 
 ## 1  Overview<a name="1-overview"></a>
-Public genome databases ( **ClinVar**¹, **gnomAD**² ) contain millions of single‑nucleotide variants (SNVs) labelled *benign*, *pathogenic* or *uncertain*.  Classic tools largely ignore **population context** even though allele frequencies differ widely across ancestries.  Our contribution is two‑fold:
+Public genome databases ( **ClinVar**¹, **gnomAD**² ) contain millions of single‑nucleotide variants (SNVs) labelled *benign*, *pathogenic* or *uncertain*.  Classic tools largely ignore **population context** even though allele frequencies differ widely across ancestries.  The contribution of this work is two‑fold:
 
 * **Population‑aware feature pipeline** – interaction terms `pop × gene`, `pop × consequence`, and frequency‐ratio features.
 * **Head‑to‑head benchmark** against equivalent *population‑agnostic* models, including both 3‑class *and* binary tasks, with fairness diagnostics.
@@ -66,7 +66,7 @@ Practical uses
 ## 4  Process Overview<a name="4-process-overview"></a>
 
 ### Early Prototype (PoC)
-Before investing in the full feature set, I validated the end-to-end flow with a quick proof-of-concept:
+Before investing in the full feature set, the end-to-end flow with a quick proof-of-concept was validated:
 - **Model**: RandomForest on the filtered SNV subset (~374 K rows)  
 - **Outcome**: ~0.70 overall accuracy, but up to **20 pp** accuracy gap between ancestry groups  
 - **Takeaway**: clear need for population-aware features to close fairness gaps  
@@ -153,7 +153,7 @@ Full search logs live in **`checkpoints/`**.
 | Non-Pop RF                | 0.87     | 0.87 | 0.91        | 0.78    |
 
 
-In binary mode the Logistic Regression pipeline actually edges out XGBoost on the pathogenic class (0.84 vs 0.81 F1), tying on overall accuracy (89 %). XGBoost remains competitive on accuracy and group-fairness, but if pathogenic recall is your priority, LR is preferable here.
+In binary mode the Logistic Regression pipeline actually edged out XGBoost on the pathogenic class (0.84 vs 0.81 F1), tying on overall accuracy (89 %). XGBoost remains competitive on accuracy and group-fairness, but if pathogenic recall is your priority, LR is preferable here.
 
 ### 8.2 Confusion matrices
 | Multiclass | Binary |
@@ -182,7 +182,7 @@ In binary mode the Logistic Regression pipeline actually edges out XGBoost on th
 > After each run the script **automatically exports** the best pop‑aware pipeline to
 > `models/best_pop_aware_binary.pkl` **or** `models/best_pop_aware_multiclass.pkl`.
 >
-> Please note that the file size for the raw data was too large to upload to github. Similarly, the saved houldout pkl files were too large to upload to github. So these files aren't in the repository
+> Please note that the file size for the raw data was too large to upload to github. Similarly, the saved houldout pkl files were too large to upload to github. So these files aren't in the repository (See section 12.2)
 
 ### 9.1 CLI inference
 ```bash
@@ -209,20 +209,6 @@ print(clf.predict_proba(X))
 
 ---
 
-## 11. Reproducing this Project & Downloading Data
-
-### 11.1 Clone & Create Environment
-
-```bash
-# Linux / macOS (conda)
-conda env create -f environment.yml && conda activate ia651_genomics
-
-# Windows PowerShell (venv)
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-pip install -r requirements.txt
-```
 
 ## 11. Conclusion
 
@@ -287,7 +273,7 @@ python scripts/plot_lr_binary_cm.py
 
 ## 13 License & Ethics
 ### 13.1 License
-This pipeline (all scripts and every single code associated with this project) offer this software under a dual-licensing scheme:
+This pipeline (all scripts and every code associated with this project) offer this software under a dual-licensing scheme:
 
 1. Open-Source (MIT)
 All non-commercial use is licensed under the MIT License. The MIT License is a permissive, OSI-approved license that allows use, modification, and distribution with minimal obligations.
